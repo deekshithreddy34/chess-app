@@ -1,7 +1,12 @@
 import { atom, selector } from 'recoil';
 
 // How do you put this in .env? @hkirat
-export const BACKEND_URL = 'http://localhost:3000';
+// packages/config/src/index.ts
+
+export const BACKEND_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://chess-app-backend-x28x.onrender.com'
+    : 'http://localhost:3000';
 export interface User {
   token: string;
   id: string;
