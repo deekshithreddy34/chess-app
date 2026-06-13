@@ -7,6 +7,7 @@ import {
 import { db } from './db';
 import { randomUUID } from 'crypto';
 import { socketManager, User } from './SocketManager';
+import { AuthProvider } from '@prisma/client';
 
 type GAME_STATUS = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED' | 'TIME_UP' | 'PLAYER_EXIT';
 type GAME_RESULT = "WHITE_WINS" | "BLACK_WINS" | "DRAW";
@@ -42,6 +43,8 @@ export class Game {
   public gameId: string;
   public player1UserId: string;
   public player2UserId: string | null;
+  private player1Name: string;
+  private player2Name: string | null = null;
   public board: Chess;
   private moveCount = 0;
   private timer: NodeJS.Timeout | null = null;
@@ -52,8 +55,9 @@ export class Game {
   private startTime = new Date(Date.now());
   private lastMoveTime = new Date(Date.now());
 
-  constructor(player1UserId: string, player2UserId: string | null, gameId?: string, startTime?: Date) {
+  constructor(player1UserId: string, player1Name: string, player2UserId: string | null, gameId?: string, startTime?: Date) {
     this.player1UserId = player1UserId;
+    this.player1Name = player1Name;
     this.player2UserId = player2UserId;
     this.board = new Chess();
     this.gameId = gameId ?? randomUUID();
@@ -107,16 +111,9 @@ export class Game {
     this.resetAbandonTimer();
     this.resetMoveTimer();
   }
-  async updateSecondPlayer(player2UserId: string) {
+  async updateSecondPlayer(player2UserId: string, player2Name: string) {
     this.player2UserId = player2UserId;
-
-    const users = await db.user.findMany({
-      where: {
-        id: {
-          in: [this.player1UserId, this.player2UserId ?? ''],
-        },
-      },
-    });
+    this.player2Name = player2Name;
 
     try {
       await this.createGameInDb();
@@ -125,9 +122,6 @@ export class Game {
       return;
     }
 
-    const WhitePlayer = users.find((user) => user.id === this.player1UserId);
-    const BlackPlayer = users.find((user) => user.id === this.player2UserId);
-
     socketManager.broadcast(
       this.gameId,
       JSON.stringify({
@@ -135,14 +129,14 @@ export class Game {
         payload: {
           gameId: this.gameId,
           whitePlayer: {
-            name: WhitePlayer?.name,
+            name: this.player1Name,
             id: this.player1UserId,
-            isGuest: WhitePlayer?.provider === AuthProvider.GUEST,
+            isGuest: true,
           },
           blackPlayer: {
-            name: BlackPlayer?.name,
+            name: this.player2Name,
             id: this.player2UserId,
-            isGuest: BlackPlayer?.provider === AuthProvider.GUEST,
+            isGuest: true,
           },
           fen: this.board.fen(),
           moves: [],
@@ -163,13 +157,25 @@ export class Game {
         startAt: this.startTime,
         currentFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         whitePlayer: {
-          connect: {
-            id: this.player1UserId,
+          connectOrCreate: {
+            where: { id: this.player1UserId },
+            create: {
+              id: this.player1UserId,
+              email: `${this.player1UserId}@chess100x.com`,
+              name: this.player1Name,
+              provider: AuthProvider.GUEST,
+            },
           },
         },
         blackPlayer: {
-          connect: {
-            id: this.player2UserId ?? '',
+          connectOrCreate: {
+            where: { id: this.player2UserId! },
+            create: {
+              id: this.player2UserId!,
+              email: `${this.player2UserId}@chess100x.com`,
+              name: this.player2Name ?? 'Guest',
+              provider: AuthProvider.GUEST,
+            },
           },
         },
       },

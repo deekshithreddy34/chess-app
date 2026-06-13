@@ -82,7 +82,7 @@ export const Game = () => {
 
   useEffect(() => {
     if (!user) {
-      window.location.href = '/login';
+      navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
     }
   }, [user]);
 

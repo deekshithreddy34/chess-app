@@ -72,10 +72,10 @@ export class GameManager {
             return;
           }
           socketManager.addUser(user, game.gameId);
-          await game?.updateSecondPlayer(user.userId);
+          await game?.updateSecondPlayer(user.userId, user.name);
           this.pendingGameId = null;
         } else {
-          const game = new Game(user.userId, null);
+          const game = new Game(user.userId, user.name, null);
           this.games.push(game);
           this.pendingGameId = game.gameId;
           socketManager.addUser(user, game.gameId);
@@ -134,7 +134,7 @@ export class GameManager {
         
         if (availableGame && !availableGame.player2UserId) {
           socketManager.addUser(user, availableGame.gameId);
-          await availableGame.updateSecondPlayer(user.userId);
+          await availableGame.updateSecondPlayer(user.userId, user.name);
           return;
         }
 
@@ -170,6 +170,7 @@ export class GameManager {
         if (!availableGame) {
           const game = new Game(
             gameFromDb?.whitePlayerId!,
+            gameFromDb?.whitePlayer?.name ?? 'Player 1',
             gameFromDb?.blackPlayerId!,
             gameFromDb.id,
             gameFromDb.startAt,

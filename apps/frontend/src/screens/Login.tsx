@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef } from 'react';
 import { useRecoilState } from 'recoil';
 import { userAtom } from '@repo/store/userAtom';
@@ -8,6 +8,7 @@ const BACKEND_URL =
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const guestName = useRef<HTMLInputElement>(null);
   const [_, setUser] = useRecoilState(userAtom);
 
@@ -32,7 +33,8 @@ const Login = () => {
     });
     const user = await response.json();
     setUser(user);
-    navigate('/game/random');
+    const returnUrl = searchParams.get('returnUrl') || '/game/random';
+    navigate(returnUrl);
   };
 
   return (
