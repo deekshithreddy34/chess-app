@@ -34,7 +34,18 @@ const allowedHosts = process.env.ALLOWED_HOSTS
   console.log(allowedHosts);
 app.use(
   cors({
-    origin: allowedHosts,
+    origin: (origin,callback)=>{
+      if(!origin || allowedHosts.some(host=>{
+        if(host.startsWith('*.')){
+          return origin.endsWith(host.slice(1));
+        }
+      return host=== origin
+      })){
+        callback(null,true);
+      }else{
+        callback(new Error(`CORS: origin ${origin} not allowed`)); 
+      }
+    },
     methods: 'GET,POST,PUT,DELETE',
     credentials: true,
   }),
