@@ -38,7 +38,7 @@ export function initPassport() {
       {
         clientID: GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: '/auth/google/callback',
+        callbackURL: 'https://chess-app-backend-x28x.onrender.com/auth/google/callback',
       },
       async function (
         accessToken: string,
