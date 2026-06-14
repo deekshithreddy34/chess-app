@@ -111,7 +111,11 @@ export class GameManager {
       }
 
       if (message.type === JOIN_ROOM) {
+        console.log("JOIN_ROOM received");
+  
+  console.log("user =", user.userId);
         const gameId = message.payload?.gameId;
+        console.log("gameId =", gameId);
         if (!gameId) {
           return;
         }
@@ -129,10 +133,12 @@ export class GameManager {
             whitePlayer: true,
           },
         });
-
+         console.log("availableGame =", !!availableGame);
         // There is a game created but no second player available
         
         if (availableGame && !availableGame.player2UserId) {
+          console.log("player2UserId =",availableGame.player2UserId);
+    console.log("PLAYER 2 JOINING EXISTING GAME");
           socketManager.addUser(user, availableGame.gameId);
           await availableGame.updateSecondPlayer(user.userId, user.name);
           return;

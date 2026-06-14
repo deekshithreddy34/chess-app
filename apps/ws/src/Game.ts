@@ -112,6 +112,9 @@ export class Game {
     this.resetMoveTimer();
   }
   async updateSecondPlayer(player2UserId: string, player2Name: string) {
+     console.log("updateSecondPlayer called");
+  console.log("player1 =", this.player1UserId);
+  console.log("player2 =", player2UserId);
     this.player2UserId = player2UserId;
     this.player2Name = player2Name;
 
