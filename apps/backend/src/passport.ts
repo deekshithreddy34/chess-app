@@ -20,6 +20,10 @@ const GITHUB_CLIENT_ID =
   process.env.GITHUB_CLIENT_ID || 'your_github_client_id';
 const GITHUB_CLIENT_SECRET =
   process.env.GITHUB_CLIENT_SECRET || 'your_github_client_secret';
+const GOOGLE_CALLBACK_URL =
+  process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback';
+const GITHUB_CALLBACK_URL =
+  process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/auth/github/callback';
 
 export function initPassport() {
   if (
@@ -38,7 +42,7 @@ export function initPassport() {
       {
         clientID: GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: 'https://chess-app-backend-x28x.onrender.com/auth/google/callback',
+        callbackURL: GOOGLE_CALLBACK_URL,
       },
       async function (
         accessToken: string,
@@ -70,7 +74,7 @@ export function initPassport() {
       {
         clientID: GITHUB_CLIENT_ID,
         clientSecret: GITHUB_CLIENT_SECRET,
-        callbackURL: '/auth/github/callback',
+        callbackURL: GITHUB_CALLBACK_URL,
       },
       async function (
         accessToken: string,
