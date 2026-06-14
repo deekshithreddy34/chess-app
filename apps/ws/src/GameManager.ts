@@ -12,6 +12,10 @@ import {
   GAME_ADDED,
   GAME_ENDED,
   EXIT_GAME,
+  RESIGN_GAME,
+  DRAW_OFFERED,
+  DRAW_ACCEPTED,
+  DRAW_DECLINED,
 } from './messages';
 import { Game, isPromoting } from './Game';
 import { db } from './db';
@@ -107,6 +111,43 @@ export class GameManager {
         if (game) {
           game.exitGame(user);
           this.removeGame(game.gameId)
+        }
+      }
+
+      if (message.type === RESIGN_GAME) {
+        const gameId = message.payload.gameId;
+        const game = this.games.find((game) => game.gameId === gameId);
+        if (game) {
+          await game.resignGame(user);
+          this.removeGame(game.gameId);
+        }
+      }
+
+      if (message.type === DRAW_OFFERED) {
+        const gameId = message.payload.gameId;
+        const game = this.games.find((game) => game.gameId === gameId);
+        if (game) {
+          await game.offerDraw(user);
+        }
+      }
+
+      if (message.type === DRAW_ACCEPTED) {
+        const gameId = message.payload.gameId;
+        const game = this.games.find((game) => game.gameId === gameId);
+        if (game) {
+          await game.acceptDraw();
+          this.removeGame(game.gameId);
+        }
+      }
+
+      if (message.type === DRAW_DECLINED) {
+        const gameId = message.payload.gameId;
+        const game = this.games.find((game) => game.gameId === gameId);
+        if (game) {
+          socketManager.broadcast(game.gameId, JSON.stringify({
+            type: DRAW_DECLINED,
+            payload: { gameId },
+          }));
         }
       }
 

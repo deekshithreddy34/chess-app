@@ -1,5 +1,6 @@
 import { Chess, Move, Square } from 'chess.js';
 import {
+  DRAW_OFFERED,
   GAME_ENDED,
   INIT_GAME,
   MOVE,
@@ -327,11 +328,30 @@ export class Game {
     }, timeLeft);
   }
 
-  async exitGame(user : User) {
+  async exitGame(user: User) {
     this.endGame('PLAYER_EXIT', user.userId === this.player2UserId ? 'WHITE_WINS' : 'BLACK_WINS');
   }
 
-  async endGame(status: GAME_STATUS, result: GAME_RESULT) {
+  async resignGame(user: User) {
+    const result: GAME_RESULT = user.userId === this.player1UserId ? 'BLACK_WINS' : 'WHITE_WINS';
+    this.endGame('COMPLETED', result, 'Resignation');
+  }
+
+  async offerDraw(user: User) {
+    socketManager.broadcast(
+      this.gameId,
+      JSON.stringify({
+        type: DRAW_OFFERED,
+        payload: { offeredBy: user.userId },
+      }),
+    );
+  }
+
+  async acceptDraw() {
+    this.endGame('COMPLETED', 'DRAW', 'Agreement');
+  }
+
+  async endGame(status: GAME_STATUS, result: GAME_RESULT, wonBy?: string) {
     const updatedGame = await db.game.update({
       data: {
         status,
@@ -358,6 +378,7 @@ export class Game {
         payload: {
           result,
           status,
+          wonBy,
           moves: updatedGame.moves,
           blackPlayer: {
             id: updatedGame.blackPlayer.id,

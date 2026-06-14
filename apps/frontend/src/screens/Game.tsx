@@ -24,6 +24,10 @@ export const USER_TIMEOUT = 'user_timeout';
 export const GAME_TIME = 'game_time';
 export const GAME_ENDED = 'game_ended';
 export const EXIT_GAME = 'exit_game';
+export const RESIGN_GAME = 'resign_game';
+export const DRAW_OFFERED = 'draw_offered';
+export const DRAW_ACCEPTED = 'draw_accepted';
+export const DRAW_DECLINED = 'draw_declined';
 export enum Result {
   WHITE_WINS = 'WHITE_WINS',
   BLACK_WINS = 'BLACK_WINS',
@@ -72,6 +76,8 @@ export const Game = () => {
   const [player1TimeConsumed, setPlayer1TimeConsumed] = useState(0);
   const [player2TimeConsumed, setPlayer2TimeConsumed] = useState(0);
   const [gameID,setGameID] = useState("");
+  const [drawOfferSent, setDrawOfferSent] = useState(false);
+  const [drawOfferedByOpponent, setDrawOfferedByOpponent] = useState(false);
   const setMoves = useSetRecoilState(movesAtom);
   const userSelectedMoveIndex = useRecoilValue(userSelectedMoveIndexAtom);
   const userSelectedMoveIndexRef = useRef(userSelectedMoveIndex);
@@ -137,24 +143,40 @@ export const Game = () => {
 
         case GAME_ENDED:
           let wonBy;
-          switch (message.payload.status) {
-            case 'COMPLETED':
-              wonBy = message.payload.result !== 'DRAW' ? 'CheckMate' : 'Draw';
-              break;
-            case 'PLAYER_EXIT':
-              wonBy = 'Player Exit';
-              break;
-            default:
-              wonBy = 'Timeout';
+          if (message.payload.wonBy) {
+            wonBy = message.payload.wonBy;
+          } else {
+            switch (message.payload.status) {
+              case 'COMPLETED':
+                wonBy = message.payload.result !== 'DRAW' ? 'CheckMate' : 'Draw';
+                break;
+              case 'PLAYER_EXIT':
+                wonBy = 'Player Exit';
+                break;
+              default:
+                wonBy = 'Timeout';
+            }
           }
           setResult({
             result: message.payload.result,
             by: wonBy,
           });
+          setDrawOfferSent(false);
+          setDrawOfferedByOpponent(false);
           chess.reset();
           setStarted(false);
           setAdded(false);
 
+          break;
+
+        case DRAW_OFFERED:
+          if (message.payload.offeredBy !== user?.id) {
+            setDrawOfferedByOpponent(true);
+          }
+          break;
+
+        case DRAW_DECLINED:
+          setDrawOfferSent(false);
           break;
 
         case USER_TIMEOUT:
@@ -244,6 +266,26 @@ export const Game = () => {
     navigate('/');
   };
 
+  const handleAcceptDraw = () => {
+    socket?.send(
+      JSON.stringify({
+        type: DRAW_ACCEPTED,
+        payload: { gameId },
+      }),
+    );
+    setDrawOfferedByOpponent(false);
+  };
+
+  const handleDeclineDraw = () => {
+    socket?.send(
+      JSON.stringify({
+        type: DRAW_DECLINED,
+        payload: { gameId },
+      }),
+    );
+    setDrawOfferedByOpponent(false);
+  };
+
   if (!socket) return <div>Connecting...</div>;
 
   return (
@@ -254,6 +296,29 @@ export const Game = () => {
           whitePlayer={gameMetadata?.whitePlayer}
           gameResult={result}
         ></GameEndModal>
+      )}
+      {drawOfferedByOpponent && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-gray-900 opacity-75"></div>
+          <div className="relative bg-gray-800 rounded-lg shadow-lg p-8 w-80 flex flex-col items-center gap-6">
+            <h2 className="text-white text-xl font-bold font-mono">Draw Offered</h2>
+            <p className="text-gray-300 text-center font-mono">Your opponent is offering a draw. Do you accept?</p>
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={handleAcceptDraw}
+                className="flex-1 py-2 bg-[#e2e6aa] text-gray-900 font-semibold rounded hover:bg-[#bbc259]"
+              >
+                Accept
+              </button>
+              <button
+                onClick={handleDeclineDraw}
+                className="flex-1 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {started && (
         <div className="justify-center flex pt-4 text-white">
@@ -339,7 +404,13 @@ export const Game = () => {
                 </div>
               )}
               <div>
-                <MovesTable />
+                <MovesTable
+                  socket={socket}
+                  gameId={gameId ?? ''}
+                  started={started}
+                  drawOfferSent={drawOfferSent}
+                  onDrawOffer={() => setDrawOfferSent(true)}
+                />
               </div>
             </div>
           </div>

@@ -15,8 +15,27 @@ import {
   ChevronRight,
   RefreshCw,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
 
-const MovesTable = () => {
+interface MovesTableProps {
+  socket: WebSocket | null;
+  gameId: string;
+  started: boolean;
+  drawOfferSent: boolean;
+  onDrawOffer: () => void;
+}
+
+const MovesTable = ({ socket, gameId, started, drawOfferSent, onDrawOffer }: MovesTableProps) => {
   const [userSelectedMoveIndex, setUserSelectedMoveIndex] = useRecoilState(
     userSelectedMoveIndexAtom,
   );
@@ -38,6 +57,22 @@ const MovesTable = () => {
       });
     }
   }, [moves]);
+
+  const handleResign = () => {
+    socket?.send(JSON.stringify({
+      type: 'resign_game',
+      payload: { gameId },
+    }));
+  };
+
+  const handleDrawOffer = () => {
+    socket?.send(JSON.stringify({
+      type: 'draw_offered',
+      payload: { gameId },
+    }));
+    onDrawOffer();
+  };
+
   return (
     <div className="text-[#C3C3C0] relative w-full ">
       <div
@@ -82,17 +117,65 @@ const MovesTable = () => {
       </div>
       {moves.length ? (
         <div className="w-full p-2 bg-[#20211D] flex items-center justify-between">
-          <div className="flex gap-4">
-            <button className="flex items-center gap-2 hover:bg-[#32302E] rounded px-2.5 py-1">
-              {<HandshakeIcon size={16} />}
-              Draw
-            </button>
-            <button className="flex items-center gap-2 hover:bg-[#32302E] rounded px-2.5 py-1">
-              {<FlagIcon size={16} />}
-              Resign
-            </button>
-          </div>
-          <div className="flex gap-1">
+          {started && (
+            <div className="flex gap-4">
+              <AlertDialog>
+                <AlertDialogTrigger
+                  disabled={drawOfferSent}
+                  className={`flex items-center gap-2 hover:bg-[#32302E] rounded px-2.5 py-1 ${drawOfferSent ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <HandshakeIcon size={16} />
+                  {drawOfferSent ? 'Offered' : 'Draw'}
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-stone-800 border-stone-800">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-white font-mono">Offer a draw?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-white font-mono">
+                      This will send a draw offer to your opponent.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="font-mono bg-[#739552] text-white font-semibold hover:bg-[#b2e084] hover:text-gray-700 border-none">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDrawOffer}
+                      className="bg-[#e2e6aa] min-w-20 text-gray-900 hover:text-slate-100 hover:bg-[#bbc259] font-semibold"
+                    >
+                      Offer Draw
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger className="flex items-center gap-2 hover:bg-[#32302E] rounded px-2.5 py-1">
+                  <FlagIcon size={16} />
+                  Resign
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-stone-800 border-stone-800">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-white font-mono">Resign the game?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-white font-mono">
+                      This action cannot be undone. You will lose the game.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="font-mono bg-[#739552] text-white font-semibold hover:bg-[#b2e084] hover:text-gray-700 border-none">
+                      Continue Playing
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResign}
+                      className="bg-red-600 min-w-20 text-white hover:bg-red-700 font-semibold"
+                    >
+                      Resign
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+          <div className={`flex gap-1 ${started ? '' : 'ml-auto'}`}>
             <button
               onClick={() => {
                 setUserSelectedMoveIndex(0);

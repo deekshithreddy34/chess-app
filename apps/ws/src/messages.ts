@@ -11,3 +11,7 @@ export const GAME_ALERT = 'game_alert';
 export const GAME_ADDED = 'game_added';
 export const GAME_TIME = 'game_time';
 export const EXIT_GAME = 'exit_game';
+export const RESIGN_GAME = 'resign_game';
+export const DRAW_OFFERED = 'draw_offered';
+export const DRAW_ACCEPTED = 'draw_accepted';
+export const DRAW_DECLINED = 'draw_declined';
