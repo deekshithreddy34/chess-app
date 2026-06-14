@@ -32,7 +32,7 @@ export const Landing = () => {
             <div className="rounded-xl">
                 <img src="https://res.cloudinary.com/dcugqfvvg/image/upload/v1713657312/undraw_questions_re_1fy7_kqjpu3.svg" alt="chess-board" />
             </div>
-            <div className="mt-16 lg:mt-0">
+            {/* <div className="mt-16 lg:mt-0">
                 <h1 className="text-6xl font-bold text-left mt-[-10px]">Found an Issue!</h1>
                 <p className="text-xl mt-6">Please create an issue in our github website below. You are also invited to contribute on the project.</p>
                 <a 
@@ -43,7 +43,7 @@ export const Landing = () => {
                     <img className="w-16 h-16" src="https://res.cloudinary.com/dcugqfvvg/image/upload/v1713657100/github-svgrepo-com_uosbko.svg" alt="icon"/>
                     <p className="text-4xl">Github</p>
                 </a>
-            </div>
+            </div> */}
         </div>
       </div>
       <Footer />
