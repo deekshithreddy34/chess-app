@@ -35,3 +35,7 @@ Let's keep it simple
     - cd apps/frontend
     - npm run dev
 
+### live demo :
+```
+https://chess-app-frontend-one.vercel.app/
+```
